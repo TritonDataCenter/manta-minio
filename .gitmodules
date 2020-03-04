@@ -1,0 +1,12 @@
+[submodule "deps/minio"]
+	path = deps/minio
+	url = https://github.com/minio/minio
+[submodule "deps/eng"]
+	path = deps/eng
+	url = https://github.com/joyent/eng.git
+[submodule "deps/manta-scripts"]
+	path = deps/manta-scripts
+	url = https://github.com/joyent/manta-scripts.git
+[submodule "deps/sdc-scripts"]
+	path = deps/sdc-scripts
+	url = https://github.com/joyent/sdc-scripts.git
