@@ -1,6 +1,6 @@
 [submodule "deps/minio"]
 	path = deps/minio
-	url = https://github.com/minio/minio
+	url = https://github.com/joyent/minio
 [submodule "deps/eng"]
 	path = deps/eng
 	url = https://github.com/joyent/eng.git
