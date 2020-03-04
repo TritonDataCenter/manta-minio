@@ -1,0 +1,6 @@
+/bits
+/build
+/cache
+/make_stamps
+/minio-pkg-*.tar.gz
+/tmp

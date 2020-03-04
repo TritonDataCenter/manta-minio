@@ -38,7 +38,7 @@
         <exec_method
             type="method"
             name="start"
-            exec="/opt/triton/minio/minio/minio --storage.tsdb.path=/data/minio/data --config.file=/opt/triton/minio/etc/minio.yml &amp;"
+	    exec="/opt/triton/minio/minio/minio server /tmp &amp;"
             timeout_seconds="30">
             <method_context working_directory="/opt/triton/minio">
                 <method_credential
@@ -77,7 +77,7 @@
             name="refresh"
             exec=":kill -HUP"
             timeout_seconds="60">
-            <method_context working_directory="/opt/triton/minio" />
+	    <method_context working_directory="/opt/triton/minio/minio" />
         </exec_method>
 
         <property_group

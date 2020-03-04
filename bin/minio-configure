@@ -1,0 +1,26 @@
+#!/bin/bash
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Copyright 2020 Joyent, Inc.
+#
+
+# XXX timf this is just a placeholder for now, expecting we might
+# need to do some sort of minio configuration at some point.
+
+
+#
+# Updates configuration files for Minio and enables/refreshes/clears
+# the SMF service as necessary.
+#
+# This is run from two contexts:
+# - From the config-agent "minio" manifest `post_cmd`
+#   (see "/opt/triton/minio/sapi_manifests/minio").
+# - On first boot, to write the initial prometheus config
+#
+# Running it directly is supported as well.
+#
+
+exit 0

@@ -11,6 +11,7 @@
 NAME = minio
 
 GO_PREBUILT_VERSION = 1.14
+GO_GOOS = solaris
 # XXX timf not sure if we need node yet
 NODE_PREBUILT_VERSION = v8.17.0
 ifeq ($(shell uname -s),SunOS)
@@ -31,7 +32,7 @@ ifeq ($(shell uname -s),SunOS)
 endif
 
 # triton-origin-x86_64-19.4.0
-BASE_IMAGE_UUID = 59ba2e5e-976f-4e09-8aac-a4a7ef0395f5w
+BASE_IMAGE_UUID = 59ba2e5e-976f-4e09-8aac-a4a7ef0395f5
 BUILDIMAGE_NAME = mantav2-$(NAME)
 BUILDIMAGE_PKGSRC = 
 BUILDIMAGE_DESC = Triton/Manta Minio
@@ -45,7 +46,6 @@ SMF_MANIFESTS = smf/manifests/minio.xml
 ESLINT_FILES := $(JS_FILES)
 BASH_FILES := $(wildcard boot/*.sh) $(TOP)/bin/minio-configure
 
-STAMP_CERTGEN := $(MAKE_STAMPS_DIR)/certgen
 
 MINIO_IMPORT = github.com/minio/minio
 MINIO_GO_DIR = $(GO_GOPATH)/src/$(MINIO_IMPORT)
@@ -66,20 +66,13 @@ $(MINIO_EXEC): deps/minio/.git $(STAMP_GO_TOOLCHAIN)
 	mkdir -p $(dir $(MINIO_GO_DIR))
 	rm -f $(MINIO_GO_DIR)
 	ln -s $(TOP)/deps/minio $(MINIO_GO_DIR)
-	(cd $(MINIO_GO_DIR) && env -i $(GO_ENV) make build)
-
-$(STAMP_CERTGEN): | $(NODE_EXEC) $(NPM_EXEC)
-	$(MAKE_STAMP_REMOVE)
-	rm -rf $(TOP)/node_modules && cd $(TOP) && $(NPM) install --production
-	$(MAKE_STAMP_CREATE)
+	(cd $(MINIO_GO_DIR) && env -i $(GO_ENV) GO111MODULE=on make -f $(TOP)/Makefile.minio build)
 
 sdc-scripts: deps/sdc-scripts/.git
 manta-scripts: deps/manta-scripts/.git
 
 .PHONY: clean
 clean::
-	# Clean certgen
-	rm -rf $(TOP)/node_modules
 	rm -rf $(MINIO_EXEC)
 
 .PHONY: release
@@ -89,8 +82,6 @@ release: all docs $(SMF_MANIFESTS)
 	cp -r \
 		$(TOP)/bin \
 		$(TOP)/etc \
-		$(TOP)/package.json \
-		$(TOP)/node_modules \
 		$(TOP)/smf \
 		$(TOP)/sapi_manifests \
 		$(RELSTAGEDIR)/root/opt/triton/$(NAME)/
@@ -98,15 +89,7 @@ release: all docs $(SMF_MANIFESTS)
 	@mkdir -p $(RELSTAGEDIR)/root/opt/triton/$(NAME)/minio
 	cp -r \
 		$(MINIO_GO_DIR)/minio \
-		$(MINIO_GO_DIR)/promtool \
-		$(MINIO_GO_DIR)/consoles \
-		$(MINIO_GO_DIR)/console_libraries \
 		$(RELSTAGEDIR)/root/opt/triton/$(NAME)/minio/
-	# our node version
-	@mkdir -p $(RELSTAGEDIR)/root/opt/triton/$(NAME)/build
-	cp -r \
-		$(TOP)/build/node \
-		$(RELSTAGEDIR)/root/opt/triton/$(NAME)/build/
 	# zone boot
 	mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/boot
 	cp -r $(TOP)/deps/sdc-scripts/{etc,lib,sbin,smf} \
