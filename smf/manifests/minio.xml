@@ -38,7 +38,7 @@
         <exec_method
             type="method"
             name="start"
-	    exec="/opt/triton/minio/minio/minio server /tmp &amp;"
+	    exec="/opt/triton/minio/minio/minio server /data/minio &amp;"
             timeout_seconds="30">
             <method_context working_directory="/opt/triton/minio">
                 <method_credential
@@ -49,9 +49,6 @@
                     <envvar
                         name="PATH"
                         value="/opt/local/bin:/usr/bin:/usr/sbin:/bin"/>
-                    <envvar
-                        name="LD_PRELOAD_32"
-                        value="/usr/lib/extendedFILE.so.1" />
                 </method_environment>
             </method_context>
         </exec_method>
