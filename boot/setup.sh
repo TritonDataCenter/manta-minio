@@ -8,7 +8,7 @@
 #
 
 #
-# One-time setup of a Triton/Manta prometheus core zone.
+# One-time setup of a Triton/Manta minio core zone.
 #
 # It is expected that this is run via the standard Triton user-script,
 # i.e. as part of the "mdata:execute" SMF service. That user-script ensures
@@ -39,8 +39,6 @@ CMON_CERT_FILE=${CMON_AUTH_DIR}/prometheus.cert.pem
 #
 PERSIST_DIR=/data/minio
 DATA_DIR=${PERSIST_DIR}/data
-
-mkdir -p /data/minio
 
 function fatal {
     printf '%s: ERROR: %s\n' "$(basename ${0})" "${*}" >&2
@@ -120,7 +118,7 @@ else # "$FLAVOR" == "triton"
     # Log rotation.
     sdc_log_rotation_add config-agent /var/svc/log/*config-agent*.log 1g
     sdc_log_rotation_add registrar /var/svc/log/*registrar*.log 1g
-    sdc_log_rotation_add prometheus /var/svc/log/*minio*.log 1g
+    sdc_log_rotation_add minio /var/svc/log/*minio*.log 1g
     sdc_log_rotation_setup_end
 
     #

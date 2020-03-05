@@ -16,7 +16,7 @@
         type="service"
         version="1.0.0">
 
-        <create_default_instance enabled="false"/>
+        <create_default_instance enabled="true"/>
         <single_instance/>
 
         <dependency
@@ -38,7 +38,7 @@
         <exec_method
             type="method"
             name="start"
-	    exec="/opt/triton/minio/minio/minio server /data/minio &amp;"
+            exec="/opt/triton/minio/minio/minio server /data/minio/data &amp;"
             timeout_seconds="30">
             <method_context working_directory="/opt/triton/minio">
                 <method_credential
@@ -74,7 +74,7 @@
             name="refresh"
             exec=":kill -HUP"
             timeout_seconds="60">
-	    <method_context working_directory="/opt/triton/minio/minio" />
+            <method_context working_directory="/opt/triton/minio/minio" />
         </exec_method>
 
         <property_group
