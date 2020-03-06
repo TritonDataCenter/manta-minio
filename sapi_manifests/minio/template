@@ -1,6 +1,7 @@
 {
     "datacenter": "{{DATACENTER}}",
     "region": "{{REGION}}",
+    "domain": "{{DOMAIN_NAME}}",
     "server_uuid": "{{auto.SERVER_UUID}}",
     "zone_uuid": "{{auto.ZONENAME}}",
     "resolvers": ["nameservice.{{DOMAIN_NAME}}"],

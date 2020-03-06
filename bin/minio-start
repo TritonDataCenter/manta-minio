@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Copyright 2020 Joyent, Inc.
+#
+
+# XXX timf this mostly a placeholder
+
+if [[ -n "$TRACE" ]]; then
+    # BASHSTYLED
+    export PS4='[\D{%FT%TZ}] ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    set -o xtrace
+fi
+set -o errexit
+set -o pipefail
+
+#
+# Lookup the minio servers we have, and start a command referencing each one
+#
+
+DOMAIN=$(json -f /opt/triton/minio/etc/config.json domain)
+MINIO_SERVERS=$(dig +short minio.${DOMAIN})
+
+# XXX timf we need to wait and retry here until we have at least 4 servers
+# available, otherwise we drop to maintenance.
+# in the meantime, after provisioning has completed, do
+# [root@headnode (europe) ~]# manta-oneach -s minio 'svcadm clear minio'
+
+MINIO_CMD=''
+for server in $MINIO_SERVERS; do
+    MINIO_CMD="$MINIO_CMD http://$server/data/minio/data"
+done
+export MINIO_SECRET_KEY=minioMantaAdmin
+export MINIO_ACCESS_KEY=minioMantaAdmin
+/opt/triton/minio/minio/minio server $MINIO_CMD &
+exit 0
