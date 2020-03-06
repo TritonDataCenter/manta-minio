@@ -1,7 +1,7 @@
 {
     "registration": {
         "domain": "{{SERVICE_NAME}}",
-        "type": "host",
+        "type": "load_balancer",
         "service": {
             "type": "service",
             "service": {
