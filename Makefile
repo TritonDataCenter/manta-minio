@@ -78,10 +78,9 @@ clean::
 .PHONY: release
 release: all docs $(SMF_MANIFESTS)
 	@echo "Building $(RELEASE_TARBALL)"
-	@mkdir -p $(RELSTAGEDIR)/root/opt/triton/$(NAME)
+	@mkdir -p $(RELSTAGEDIR)/root/opt/triton/$(NAME)/etc
 	cp -r \
 		$(TOP)/bin \
-		$(TOP)/etc \
 		$(TOP)/smf \
 		$(TOP)/sapi_manifests \
 		$(RELSTAGEDIR)/root/opt/triton/$(NAME)/
