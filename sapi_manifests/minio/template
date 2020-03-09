@@ -5,6 +5,7 @@
     "server_uuid": "{{auto.SERVER_UUID}}",
     "zone_uuid": "{{auto.ZONENAME}}",
     "resolvers": ["nameservice.{{DOMAIN_NAME}}"],
+    "manta_minio_id": "{{MANTA_MINIO_ID}}",
     {{! "_eof" is an unused key for convenience handling the trailing comma }}
     "_eof": null
 }

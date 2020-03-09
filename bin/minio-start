@@ -22,18 +22,37 @@ set -o pipefail
 #
 
 DOMAIN=$(json -f /opt/triton/minio/etc/config.json domain)
-MINIO_SERVERS=$(dig +short minio.${DOMAIN})
 
-# XXX timf we need to wait and retry here until we have at least 4 servers
-# available, otherwise we drop to maintenance.
-# in the meantime, after provisioning has completed, do
-# [root@headnode (europe) ~]# manta-oneach -s minio 'svcadm clear minio'
+# XXX timf hardcoding a maximum of 4 instances for now
+MINIO_MAX_COUNT=4
+RETRY_MAX=20
 
-MINIO_CMD=''
-for server in $MINIO_SERVERS; do
-    MINIO_CMD="$MINIO_CMD http://$server/data/minio/data"
+# Wait and retry here until we have at least MINIO_MAX_COUNT
+# instances provisioned
+COUNT=0
+RETRIES=0
+while [[ $COUNT -lt $MINIO_MAX_COUNT ]]; do
+    if [[ $RETRIES -gt 0 ]]; then
+        sleep 5
+    fi
+    if [[ $RETRIES -gt $RETRY_MAX ]]; then
+        break
+    fi
+    # XXX timf for now we use minio.<domain>. In the future, we could use
+    # minio.<rack>.<domain>
+    MINIO_SERVERS=$(dig +short minio.${DOMAIN} | sort -u)
+    COUNT=$(echo $MINIO_SERVERS | wc -w)
+    RETRIES=$(( $RETRIES + 1 ))
 done
+
+COUNT=$(echo $MINIO_SERVERS | wc -w)
+if [[ $COUNT -lt $MINIO_MAX_COUNT ]]; then
+    echo "Error: we only have $COUNT instances online. We need $MINIO_MAX_COUNT"
+    echo "We retried $RETRIES times, exiting 1 now."
+    exit 1
+fi
+
 export MINIO_SECRET_KEY=minioMantaAdmin
 export MINIO_ACCESS_KEY=minioMantaAdmin
-/opt/triton/minio/minio/minio server $MINIO_CMD &
+/opt/triton/minio/minio/minio server http://{1...${MINIO_MAX_COUNT}}.minio.${DOMAIN}/data/minio/data &
 exit 0

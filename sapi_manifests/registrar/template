@@ -2,6 +2,9 @@
     "registration": {
         "domain": "{{SERVICE_NAME}}",
         "type": "load_balancer",
+         "aliases": [
+            "{{MANTA_MINIO_ID}}"
+        ],
         "service": {
             "type": "service",
             "service": {

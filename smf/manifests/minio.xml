@@ -38,8 +38,8 @@
         <exec_method
             type="method"
             name="start"
-		exec="/opt/triton/minio/bin/minio-start"
-            timeout_seconds="30">
+            exec="/opt/triton/minio/bin/minio-start"
+            timeout_seconds="300">
             <method_context working_directory="/opt/triton/minio">
                 <method_credential
                     user="nobody"
