@@ -48,8 +48,8 @@ done
 COUNT=$(echo $MINIO_SERVERS | wc -w)
 if [[ $COUNT -lt $MINIO_MAX_COUNT ]]; then
     echo "Error: we only have $COUNT instances online. We need $MINIO_MAX_COUNT"
-    echo "We retried $RETRIES times, exiting 1 now."
-    exit 1
+    echo "We retried $RETRIES times. We're *not* going to exit, but are not sure"
+    echo "if this is going to end well..."
 fi
 
 export MINIO_SECRET_KEY=minioMantaAdmin
