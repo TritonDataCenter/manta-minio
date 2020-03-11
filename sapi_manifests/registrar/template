@@ -1,8 +1,13 @@
 {
     "registration": {
+        {{#MANTA_RACK}}
+        "domain": "{{MANTA_RACK}}.{{SERVICE_NAME}}",
+        {{/MANTA_RACK}}
+        {{^MANTA_RACK}}
         "domain": "{{SERVICE_NAME}}",
+        {{/MANTA_RACK}}
         "type": "load_balancer",
-         "aliases": [
+        "aliases": [
             "{{MANTA_MINIO_ID}}"
         ],
         "service": {

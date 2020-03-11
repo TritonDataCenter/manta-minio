@@ -22,6 +22,10 @@ set -o pipefail
 #
 
 DOMAIN=$(json -f /opt/triton/minio/etc/config.json domain)
+if [[ -z "$DOMAIN" ]]; then
+    echo "Error: unable to get domain from /opt/triton/minio/etc/config.json"
+    exit 1
+fi
 
 # XXX timf hardcoding a maximum of 4 instances for now
 MINIO_MAX_COUNT=4
@@ -38,9 +42,7 @@ while [[ $COUNT -lt $MINIO_MAX_COUNT ]]; do
     if [[ $RETRIES -gt $RETRY_MAX ]]; then
         break
     fi
-    # XXX timf for now we use minio.<domain>. In the future, we could use
-    # minio.<rack>.<domain>
-    MINIO_SERVERS=$(dig +short minio.${DOMAIN} | sort -u)
+    MINIO_SERVERS=$(dig +short ${DOMAIN} | sort -u)
     COUNT=$(echo $MINIO_SERVERS | wc -w)
     RETRIES=$(( $RETRIES + 1 ))
 done
@@ -54,5 +56,5 @@ fi
 
 export MINIO_SECRET_KEY=minioMantaAdmin
 export MINIO_ACCESS_KEY=minioMantaAdmin
-/opt/triton/minio/minio/minio server http://{1...${MINIO_MAX_COUNT}}.minio.${DOMAIN}/data/minio/data &
+/opt/triton/minio/minio/minio server http://{1...${MINIO_MAX_COUNT}}.${DOMAIN}/data/minio/data &
 exit 0

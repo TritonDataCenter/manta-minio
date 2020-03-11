@@ -1,7 +1,12 @@
 {
     "datacenter": "{{DATACENTER}}",
     "region": "{{REGION}}",
-    "domain": "{{DOMAIN_NAME}}",
+    {{#MANTA_RACK}}
+    "domain": "{{MANTA_RACK}}.{{SERVICE_NAME}}",
+    {{/MANTA_RACK}}
+    {{^MANTA_RACK}}
+    "domain": "{{SERVICE_NAME}}",
+    {{/MANTA_RACK}}
     "server_uuid": "{{auto.SERVER_UUID}}",
     "zone_uuid": "{{auto.ZONENAME}}",
     "resolvers": ["nameservice.{{DOMAIN_NAME}}"],
