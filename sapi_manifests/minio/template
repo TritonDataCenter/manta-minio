@@ -11,6 +11,8 @@
     "zone_uuid": "{{auto.ZONENAME}}",
     "resolvers": ["nameservice.{{DOMAIN_NAME}}"],
     "manta_minio_id": "{{MANTA_MINIO_ID}}",
+    "manta_minio_max_inst": "{{MANTA_MINIO_MAX_INST}}",
+    "manta_minio_min_inst": "{{MANTA_MINIO_MIN_INST}}",
     {{! "_eof" is an unused key for convenience handling the trailing comma }}
     "_eof": null
 }

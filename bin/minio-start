@@ -27,34 +27,51 @@ if [[ -z "$DOMAIN" ]]; then
     exit 1
 fi
 
-# XXX timf hardcoding a maximum of 4 instances for now
-MINIO_MAX_COUNT=4
-RETRY_MAX=20
+# The number of instances we include in our cluster
+MINIO_MAX_INST=$(json -f /opt/triton/minio/etc/config.json manta_minio_max_inst)
 
-# Wait and retry here until we have at least MINIO_MAX_COUNT
-# instances provisioned
+# The minimum number of instances we need to see in Zk before attempting
+# to start. Minio itself will wait for the remote minio instances to come
+# online, so this is really just a best effort.
+MINIO_MIN_INST=$(json -f /opt/triton/minio/etc/config.json manta_minio_min_inst)
+
+if [[ -z "$MINIO_MAX_INST" ]]; then
+    MINIO_MAX_INST=4
+fi
+
+if [[ -z "$MINIO_MIN_INST" ]]; then
+    MINIO_MIN_INST=3
+fi
+
+RETRY_MAX=360
+
+# Wait and retry here until we have at least MINIO_MIN_COUNT
+# instances provisioned. We'll wait up to 30 minutes for this
+# to be the case.
 COUNT=0
 RETRIES=0
-while [[ $COUNT -lt $MINIO_MAX_COUNT ]]; do
+while [[ $COUNT -lt $MINIO_MIN_INST ]]; do
     if [[ $RETRIES -gt 0 ]]; then
         sleep 5
     fi
     if [[ $RETRIES -gt $RETRY_MAX ]]; then
         break
     fi
-    MINIO_SERVERS=$(dig +short ${DOMAIN} | sort -u)
-    COUNT=$(echo $MINIO_SERVERS | wc -w)
+    MINIO_INSTANCES=$(dig +short ${DOMAIN} | sort -u)
+    COUNT=$(echo $MINIO_INSTANCES | wc -w)
     RETRIES=$(( $RETRIES + 1 ))
 done
 
-COUNT=$(echo $MINIO_SERVERS | wc -w)
-if [[ $COUNT -lt $MINIO_MAX_COUNT ]]; then
-    echo "Error: we only have $COUNT instances online. We need $MINIO_MAX_COUNT"
-    echo "We retried $RETRIES times. We're *not* going to exit, but are not sure"
-    echo "if this is going to end well..."
+COUNT=$(echo $MINIO_INSTANCES | wc -w)
+if [[ $COUNT -lt $MINIO_MIN_INST ]]; then
+    echo "Warning: we only have $COUNT instances online."
+    echo "While minio should be able to cope with $MINIO_MAX_INST / 2"
+    echo "instances online, this script wants $MINIO_MIN_INST instances "
+    echo "available, of a total of $MINIO_MAX_INST instances to be online."
+    echo "We retried $RETRIES times."
 fi
 
 export MINIO_SECRET_KEY=minioMantaAdmin
 export MINIO_ACCESS_KEY=minioMantaAdmin
-/opt/triton/minio/minio/minio server http://{1...${MINIO_MAX_COUNT}}.${DOMAIN}/data/minio/data &
+/opt/triton/minio/minio/minio server http://{1...${MINIO_MAX_INST}}.${DOMAIN}/data/minio/data &
 exit 0
