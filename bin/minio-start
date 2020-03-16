@@ -32,8 +32,8 @@ fi
 # The number of instances we include in our cluster
 MINIO_INST_COUNT=$(json -f /opt/triton/minio/etc/config.json minio_inst_count)
 
-if [[ -z "$MINIO_INST" ]]; then
-    MINIO_INST=4
+if [[ -z "$MINIO_INST_COUNT" ]]; then
+    MINIO_INST_COUNT=4
 fi
 
 RETRY_MAX=360
