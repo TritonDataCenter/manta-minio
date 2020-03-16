@@ -24,12 +24,13 @@ using the [`minio-poc` branch of sdc-manta.git](https://github.com/joyent/sdc-ma
 To use:
 
 * Build a new `manta-deployment` image from the sdc-manta.git repository
+  on the `minio-poc` branch
 * Reprovision your `manta0` instance with that image
 * Log in to the manta-deployment zone, and re-run `manta-init`
-* Deploy an instance of the minio image as a standard `--experimental`
+* Deploy 4 instances of the minio image as a standard `--experimental`
   Manta service named `minio` using `manta-adm`.
 
-The instance currently listens on the external network, http://<ip>:9000.
+The instance currently listens on the external network, `http://<ip>:9000`.
 
 ```
 [root@headnode (europe) ~]# zlogin min[completed alias: minio.earth.example.com-524cf56e]
@@ -49,8 +50,47 @@ online         12:53:50 svc:/triton/site/minio:default
 
 The minio service is minimally integrated with Manta, listens on the external
 network, **only** writes to `/data/minio/data` on a delegated dataset within
-the instance and is **not yet clustered or fault tolerant**. Buyer beware.
+the instance.
 
+We require at least 4 instances to be provisioned, and use the SAPI service
+metadata parameter `MINIO_INST_COUNT` to declare how many instances should be
+part of the initial
+[distributed erasure coding set](https://docs.min.io/docs/distributed-minio-quickstart-guide.html).
+This currently can be set to 4, 6, 8, 10, 12, 14 or 16. The minio SMF service
+will likely drop to maintenance if you use an invalid value.
+
+The number of instances deployed `by manta-adm` must always be a multiple of
+the value of `MINIO_INST_COUNT`.
+
+By default, we look for the `MANTA_RACK` SAPI service metadata to determine
+rack in which related minio instances are housed. This gets set in
+[sdc-manta.git:/lib/deploy.js](https://github.com/joyent/sdc-manta/blob/minio-poc/lib/deploy.js#L1143)
+based on the presence of a `manta_rack_<RACK>` nictag.
+
+The `manta_minio_id` value is analogous to Mako's `manta_storage_id`, and is
+used to name instances:
+
+        [root@headnode (europe) ~]# manta-adm show -o zonename,minio_id minio
+        ZONENAME                             MINIO ID
+        07fc71ea-3a50-4a24-8e8a-a87d979e6ad1 2.minio.earth.example.com
+        1d2fd3e4-edb7-4ce5-871e-83ed58652338 5.minio.earth.example.com
+        2e82bd94-7e13-4041-9e8a-9829c3e4b08b 4.minio.earth.example.com
+        306a701b-ccc7-4235-9e8f-07bce42c656a 6.minio.earth.example.com
+        47c259eb-7039-4ec5-b307-231e54902e04 1.minio.earth.example.com
+        55d2c766-d729-4434-b87a-22b460251920 3.minio.earth.example.com
+        [root@headnode (europe) ~]#
+
+If a `MANTA_RACK` value is found, that data is included as a component of the
+`manta_minio_id`
+
+At provisioning time, the 'domain' of the instance is set to
+`{{MANTA_RACK}}.{{SERVICE_NAME}}` on rack-aware minio setups, or
+`{{SERVICE_NAME}}`, and minio is started using the instances it discovers,
+using the nameservice aliases corresponding to the `manta_minio_id` values.
+
+## Maintenance
+
+TBD. (yes, don't use this for production data yet)
 
 ## Build
 
@@ -60,54 +100,8 @@ the instance and is **not yet clustered or fault tolerant**. Buyer beware.
 make all
 ```
 
-At present, this uses the
+At present, this service uses the
 [`illumos_fixes` branch of joyent/minio.git](https://github.com/joyent/minio/tree/illumos_fixes)
-
-We're awaiting [Kody's patch to azure-storage-blob](https://github.com/Azure/azure-storage-blob-go/pull/117)
-to integrate before we can get a full clean build.
-
-In the meantime, after
-`make all` fails, you can modify the `cache/gopath1.14/pkg/mod/github.com/!azure/azure-storage-blob-go@v0.8.0`
-with the following patch:
-
-```
-diff --git a/pkg/mod/github.com/!azure/azure-storage-blob-go@v0.8.0/azblob/zc_mmf_unix.go b/pkg/mod/github.com/!azure/azure-storage-blob-go@v0.8.0/azblob/zc_mmf_unix.go
-index 3e8c7cba..c2767704 100644
---- a/pkg/mod/github.com/!azure/azure-storage-blob-go@v0.8.0/azblob/zc_mmf_unix.go
-+++ b/pkg/mod/github.com/!azure/azure-storage-blob-go@v0.8.0/azblob/zc_mmf_unix.go
-@@ -1,25 +1,25 @@
--// +build linux darwin freebsd openbsd netbsd dragonfly
-+// +build linux darwin freebsd openbsd netbsd dragonfly solaris
-
- package azblob
-
- import (
-        "os"
--       "syscall"
-+       "golang.org/x/sys/unix"
- )
-
- type mmf []byte
-
- func newMMF(file *os.File, writable bool, offset int64, length int) (mmf, error) {
--       prot, flags := syscall.PROT_READ, syscall.MAP_SHARED // Assume read-only
-+       prot, flags := unix.PROT_READ, unix.MAP_SHARED // Assume read-only
-        if writable {
--               prot, flags = syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED
-+               prot, flags = unix.PROT_READ|unix.PROT_WRITE, unix.MAP_SHARED
-        }
--       addr, err := syscall.Mmap(int(file.Fd()), offset, length, prot, flags)
-+       addr, err := unix.Mmap(int(file.Fd()), offset, length, prot, flags)
-        return mmf(addr), err
- }
-
- func (m *mmf) unmap() {
--       err := syscall.Munmap(*m)
-+       err := unix.Munmap(*m)
-        *m = nil
-        if err != nil {
-                panic("if we are unable to unmap the memory-mapped file, there is serious concern for memory corruption")
-```
 
 ### Images
 Information on how to building Triton/Manta components to be deployed within
