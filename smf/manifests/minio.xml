@@ -53,7 +53,7 @@
                     grouping="require_all"
                     restart_on="none"
                     type="service">
-            <service_fmri value="svc:/manta/application/config-agent" />
+            <service_fmri value="svc:/smartdc/application/config-agent" />
         </dependency>
 
         <!-- This is an extremely long start method timeout
