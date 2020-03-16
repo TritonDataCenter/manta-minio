@@ -42,18 +42,29 @@
             <service_fmri value="svc:/smartdc/mdata:execute" />
         </dependency>
 
-    <dependency name="registrar"
-                grouping="require_all"
-                restart_on="none"
-                type="service">
-        <service_fmri value="svc:/manta/application/registrar" />
-    </dependency>
+        <dependency name="registrar"
+                    grouping="require_all"
+                    restart_on="none"
+                    type="service">
+            <service_fmri value="svc:/manta/application/registrar" />
+        </dependency>
 
+        <dependency name="config"
+                    grouping="require_all"
+                    restart_on="none"
+                    type="service">
+            <service_fmri value="svc:/manta/application/config-agent" />
+        </dependency>
+
+        <!-- This is an extremely long start method timeout
+            but as we won't start the service till all components
+            are registered in the nameservice, when testing on coal
+            for large numbers of services, that can take some time -->
         <exec_method
             type="method"
             name="start"
             exec="/opt/triton/minio/bin/minio-start"
-            timeout_seconds="300">
+            timeout_seconds="1800">
             <method_context working_directory="/opt/triton/minio">
                 <method_credential
                     user="nobody"

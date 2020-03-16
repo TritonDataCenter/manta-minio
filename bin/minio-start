@@ -21,6 +21,8 @@ set -o pipefail
 # Lookup the minio servers we have, and start a command referencing each one
 #
 
+# The domain here defaults to {{MANTA_RACK}}.{{SERVICE_NAME}} if on a
+# rack-aware network, otherwise {{SERVICE_NAME}}
 DOMAIN=$(json -f /opt/triton/minio/etc/config.json domain)
 if [[ -z "$DOMAIN" ]]; then
     echo "Error: unable to get domain from /opt/triton/minio/etc/config.json"
@@ -28,50 +30,42 @@ if [[ -z "$DOMAIN" ]]; then
 fi
 
 # The number of instances we include in our cluster
-MINIO_MAX_INST=$(json -f /opt/triton/minio/etc/config.json manta_minio_max_inst)
+MINIO_INST_COUNT=$(json -f /opt/triton/minio/etc/config.json minio_inst_count)
 
-# The minimum number of instances we need to see in Zk before attempting
-# to start. Minio itself will wait for the remote minio instances to come
-# online, so this is really just a best effort.
-MINIO_MIN_INST=$(json -f /opt/triton/minio/etc/config.json manta_minio_min_inst)
-
-if [[ -z "$MINIO_MAX_INST" ]]; then
-    MINIO_MAX_INST=4
-fi
-
-if [[ -z "$MINIO_MIN_INST" ]]; then
-    MINIO_MIN_INST=3
+if [[ -z "$MINIO_INST" ]]; then
+    MINIO_INST=4
 fi
 
 RETRY_MAX=360
 
-# Wait and retry here until we have at least MINIO_MIN_COUNT
-# instances provisioned. We'll wait up to 30 minutes for this
-# to be the case.
+# Wait and retry here until we have at least $MINIO_INST_COUNT
+# instances registered in the nameservice.
+# We'll wait up to 30 minutes for this to be the case, and will
+# continue regardless after that (which will probably result in
+# us dropping the service to maintenance)
 COUNT=0
 RETRIES=0
-while [[ $COUNT -lt $MINIO_MIN_INST ]]; do
+while [[ $COUNT -lt $MINIO_INST_COUNT ]]; do
     if [[ $RETRIES -gt 0 ]]; then
         sleep 5
     fi
     if [[ $RETRIES -gt $RETRY_MAX ]]; then
         break
     fi
-    MINIO_INSTANCES=$(dig +short ${DOMAIN} | sort -u)
-    COUNT=$(echo $MINIO_INSTANCES | wc -w)
+    KNOWN_INSTANCES=$(dig +short ${DOMAIN} | sort -u)
+    COUNT=$(echo $KNOWN_INSTANCES | wc -w)
     RETRIES=$(( $RETRIES + 1 ))
 done
 
-COUNT=$(echo $MINIO_INSTANCES | wc -w)
-if [[ $COUNT -lt $MINIO_MIN_INST ]]; then
+COUNT=$(echo $KNOWN_INSTANCES | wc -w)
+if [[ $COUNT -lt $MINIO_INST_COUNT ]]; then
     echo "Warning: we only have $COUNT instances online."
-    echo "While minio should be able to cope with $MINIO_MAX_INST / 2"
-    echo "instances online, this script wants $MINIO_MIN_INST instances "
-    echo "available, of a total of $MINIO_MAX_INST instances to be online."
-    echo "We retried $RETRIES times."
+    echo "While minio should be able to cope with $MINIO_INST_COUNT / 2"
+    echo "instances online, until those are at least registered with"
+    echo "the nameservice, we won't be able to start minio."
 fi
 
 export MINIO_SECRET_KEY=minioMantaAdmin
 export MINIO_ACCESS_KEY=minioMantaAdmin
-/opt/triton/minio/minio/minio server http://{1...${MINIO_MAX_INST}}.${DOMAIN}/data/minio/data &
+/opt/triton/minio/minio/minio server http://{1...${MINIO_INST_COUNT}}.${DOMAIN}/data/minio/data &
 exit 0
